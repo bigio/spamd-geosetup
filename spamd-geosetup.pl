@@ -12,6 +12,9 @@ use lib ("$FindBin::Bin");
 
 use Getopt::Std;
 
+my $pfctl = '/sbin/pfctl';
+my $spamdb = '/usr/sbin/spamdb';
+
 my %opts;
 my $config_file;
 my $fh_cf;

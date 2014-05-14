@@ -1,4 +1,6 @@
 spamd-geosetup
 ==============
 
-Program to filter out entries from ip address lists, to be used to load data in OpenBSD spamd(8)
+The spamd-geosetup utility sends blacklist data to spamd(8), as well as
+configuring mail rejection messages for blacklist entries after 
+having discarded some ip addresses based on geolocalization rules.

@@ -11,6 +11,7 @@ use FindBin;
 use lib ("$FindBin::Bin");
 
 use Getopt::Std;
+use LWP::UserAgent;
 
 my $pfctl = '/sbin/pfctl';
 my $spamdb = '/usr/sbin/spamdb';
@@ -23,6 +24,7 @@ my $file = '';
 my @a_uri;
 my $countp = 0;
 my $countf = 0;
+my $ztxt_spamfile;
 
 getopts('hc:', \%opts);
 if ( defined $opts{'h'} ) {
@@ -47,6 +49,7 @@ while (<$fh_cf>) {
 	if ( /(.*)method=/ ) {
 		$proto = $_;
 		$proto =~ s/\t:method=(.*)\\/$1/;
+		$proto =~ s/://;
 		$a_uri[$countp]{'proto'} = $proto;
 		$countp++;
 	}
@@ -60,4 +63,20 @@ while (<$fh_cf>) {
 
 for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
+        # Create a user agent object
+        my $ua = LWP::UserAgent->new;
+        $ua->agent("spamd-geosetup/0.1");
+
+        # Create a request
+        my $req = HTTP::Request->new(GET => $a_uri[$count]{'proto'} . '://' . $a_uri[$count]{'file'});
+
+        # Pass request to the user agent and get a response back
+        my $res = $ua->request($req);
+
+        # Check the outcome of the response
+        if ($res->is_success) {
+                $ztxt_spamfile = $res->content;
+        } else {
+                die $res->status_line, "\n";
+        }
 }

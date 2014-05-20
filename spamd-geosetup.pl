@@ -18,6 +18,8 @@ my $spamdb = '/usr/sbin/spamdb';
 
 my %opts;
 my $config_file;
+my $offline = 0;
+my $spamfile = '';
 my $fh_cf;
 my $proto = '';
 my $file = '';
@@ -26,15 +28,19 @@ my $countp = 0;
 my $countf = 0;
 my $ztxt_spamfile;
 
-getopts('hc:', \%opts);
+getopts('c:ho', \%opts);
 if ( defined $opts{'h'} ) {
-        print "Usage: spamd-geosetup.pl [ -c config file]\n";
+        print "Usage: spamd-geosetup.pl [ -c config file] [-o]\n";
         exit;
 }
 if ( defined $opts{'c'} ) {
 	$config_file = $opts{'c'};
 } else {
 	$config_file = '/etc/mail/spamd.conf';
+}
+if ( defined $opts{'o'} ) {
+	# Offline mode
+	$offline = 1;
 }
 
 if ( -f $config_file ) {
@@ -60,23 +66,34 @@ while (<$fh_cf>) {
 		$countf++;
 	}
 }
+close($fh_cf);
 
 for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
-        # Create a user agent object
-        my $ua = LWP::UserAgent->new;
-        $ua->agent("spamd-geosetup/0.1");
+	if ( !$offline ) {
+        	# Create a user agent object
+        	my $ua = LWP::UserAgent->new;
+        	$ua->agent("spamd-geosetup/0.1");
 
-        # Create a request
-        my $req = HTTP::Request->new(GET => $a_uri[$count]{'proto'} . '://' . $a_uri[$count]{'file'});
+        	# Create a request
+        	my $req = HTTP::Request->new(GET => $a_uri[$count]{'proto'} . '://' . $a_uri[$count]{'file'});
 
-        # Pass request to the user agent and get a response back
-        my $res = $ua->request($req);
+        	# Pass request to the user agent and get a response back
+        	my $res = $ua->request($req);
 
-        # Check the outcome of the response
-        if ($res->is_success) {
-                $ztxt_spamfile = $res->content;
-        } else {
-                die $res->status_line, "\n";
-        }
+        	# Check the outcome of the response
+        	if ($res->is_success) {
+                	$ztxt_spamfile = $res->content;
+        	} else {
+                	die $res->status_line, "\n";
+        	}
+	} else {
+		my @a_spamfile = split('/', $a_uri[$count]{'file'});
+		$spamfile = $a_spamfile[@a_spamfile - 1];
+		if ( -f $spamfile ) {
+			open $ztxt_spamfile, '<', $spamfile or die("Cannot open $spamfile");
+		} else {
+			print "File $spamfile non trovato\n";
+		}
+	}
 }

@@ -12,15 +12,18 @@ use lib ("$FindBin::Bin");
 
 use Getopt::Std;
 use LWP::UserAgent;
+use File::Temp qw/ :mktemp /;
 
 my $pfctl = '/sbin/pfctl';
 my $spamdb = '/usr/sbin/spamdb';
+my $gzip = '/usr/bin/gzip';
 
 my %opts;
 my $config_file;
 my $offline = 0;
 my $spamfile = '';
 my $fh_cf;
+my $fh_zs;
 my $proto = '';
 my $file = '';
 my @a_uri;
@@ -84,6 +87,11 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
         	# Check the outcome of the response
         	if ($res->is_success) {
                 	$ztxt_spamfile = $res->content;
+			$spamfile = mktemp( "spamXXXXXXX" );
+			open $fh_zs, '>', $spamfile or die("Cannot uncompress downloaded file $a_uri[$count]{'file'}\n");
+			print $fh_zs $ztxt_spamfile;
+			close($fh_zs);
+			open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
         	} else {
                 	die $res->status_line, "\n";
         	}
@@ -91,9 +99,16 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		my @a_spamfile = split('/', $a_uri[$count]{'file'});
 		$spamfile = $a_spamfile[@a_spamfile - 1];
 		if ( -f $spamfile ) {
-			open $ztxt_spamfile, '<', $spamfile or die("Cannot open $spamfile");
+			open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
 		} else {
 			print "File $spamfile non trovato\n";
 		}
+	}
+	while (<$fh_zs>) {
+		print $_;
+	}
+	close($fh_zs);
+	if ( !$offline ) {
+		unlink($spamfile);
 	}
 }

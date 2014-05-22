@@ -30,6 +30,7 @@ my @a_uri;
 my $countp = 0;
 my $countf = 0;
 my $ztxt_spamfile;
+my $ip;
 
 getopts('c:ho', \%opts);
 if ( defined $opts{'h'} ) {
@@ -87,7 +88,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
         	# Check the outcome of the response
         	if ($res->is_success) {
                 	$ztxt_spamfile = $res->content;
-			$spamfile = mktemp( "spamXXXXXXX" );
+			$spamfile = mktemp( "/tmp/spamXXXXXXX" );
 			open $fh_zs, '>', $spamfile or die("Cannot uncompress downloaded file $a_uri[$count]{'file'}\n");
 			print $fh_zs $ztxt_spamfile;
 			close($fh_zs);
@@ -105,7 +106,9 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		}
 	}
 	while (<$fh_zs>) {
-		print $_;
+		$ip = $_;
+		$ip =~ s/\/(.*)//;
+		print $ip;
 	}
 	close($fh_zs);
 	if ( !$offline ) {

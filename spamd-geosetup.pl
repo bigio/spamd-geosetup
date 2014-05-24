@@ -17,18 +17,21 @@ use File::Temp qw/ :mktemp /;
 my $pfctl = '/sbin/pfctl';
 my $spamdb = '/usr/sbin/spamdb';
 my $gzip = '/usr/bin/gzip';
+my $config_file = '/etc/mail/spamd.conf';
 
 my %opts;
-my $config_file;
+my $gs_config_file;
 my $offline = 0;
 my $spamfile = '';
 my $fh_cf;
 my $fh_zs;
 my $proto = '';
 my $file = '';
+my $white_country = '';
 my @a_uri;
-my $countp = 0;
+my $a_wcountry;
 my $countf = 0;
+my $countp = 0;
 my $ztxt_spamfile;
 my $ip;
 
@@ -38,9 +41,9 @@ if ( defined $opts{'h'} ) {
         exit;
 }
 if ( defined $opts{'c'} ) {
-	$config_file = $opts{'c'};
+	$gs_config_file = $opts{'c'};
 } else {
-	$config_file = '/etc/mail/spamd.conf';
+	$gs_config_file = '/etc/mail/geospamd.conf';
 }
 if ( defined $opts{'o'} ) {
 	# Offline mode
@@ -72,6 +75,21 @@ while (<$fh_cf>) {
 }
 close($fh_cf);
 
+# Parse geospamd config file
+if ( -f $gs_config_file ) {
+        open $fh_cf, '<', $gs_config_file or die "Can't open $gs_config_file";
+}
+while (<$fh_cf>) {
+	chomp;
+	next if /^#/;
+	if ( /(.*)whitelist=/ ) {
+		$white_country = $_;
+		$white_country =~ s/whitelist=(.*)/$1/;
+	}	
+}
+close($fh_cf);
+$a_wcountry = split(",", $white_country);
+
 for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
 	if ( !$offline ) {
@@ -102,11 +120,14 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		if ( -f $spamfile ) {
 			open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
 		} else {
+			# Errors out and skip this file
 			print "File $spamfile non trovato\n";
+			next;
 		}
 	}
 	while (<$fh_zs>) {
 		$ip = $_;
+		next if /^#/;
 		$ip =~ s/\/(.*)//;
 		print $ip;
 	}

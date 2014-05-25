@@ -13,11 +13,13 @@ use lib ("$FindBin::Bin");
 use Getopt::Std;
 use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
+use Geo::IP;
 
 my $pfctl = '/sbin/pfctl';
 my $spamdb = '/usr/sbin/spamdb';
 my $gzip = '/usr/bin/gzip';
 my $config_file = '/etc/mail/spamd.conf';
+my $geospamdb = '/usr/local/share/examples/GeoIP/GeoIP.dat';
 
 my %opts;
 my $gs_config_file;
@@ -29,7 +31,6 @@ my $proto = '';
 my $file = '';
 my $white_country = '';
 my @a_uri;
-my $a_wcountry;
 my $countf = 0;
 my $countp = 0;
 my $ztxt_spamfile;
@@ -88,8 +89,10 @@ while (<$fh_cf>) {
 	}	
 }
 close($fh_cf);
-$a_wcountry = split(",", $white_country);
 
+my $gi = Geo::IP->open("$geospamdb") 
+		or die("Cannot open GeoIP.dat file");
+my $country = '';
 for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
 	if ( !$offline ) {
@@ -125,11 +128,22 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			next;
 		}
 	}
-	while (<$fh_zs>) {
-		$ip = $_;
-		next if /^#/;
-		$ip =~ s/\/(.*)//;
-		print $ip;
+	# Run pfctl only if we are root
+	if ( $> eq 0 ) {
+		system($pfctl . " -t spamf -T flush");
+		while (<$fh_zs>) {
+			$ip = $_;
+			chomp;
+			next if /^#/;
+			$ip =~ s/\/(.*)//;
+			chop($ip);
+			$country = $gi->country_code_by_addr("$ip");
+			if ( defined ( $country ) && $country !~ /$white_country/ ) {
+				system($pfctl . " -t spamd -T add " . $ip);
+			}		
+		}	
+	} else {
+		die("Cannot run pfctl, are you root?\n");
 	}
 	close($fh_zs);
 	if ( !$offline ) {

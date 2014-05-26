@@ -19,6 +19,7 @@ my $pfctl = '/sbin/pfctl';
 my $spamdb = '/usr/sbin/spamdb';
 my $gzip = '/usr/bin/gzip';
 my $config_file = '/etc/mail/spamd.conf';
+# XXX should be configurable
 my $geospamdb = '/usr/local/share/examples/GeoIP/GeoIP.dat';
 
 my %opts;
@@ -79,6 +80,8 @@ close($fh_cf);
 # Parse geospamd config file
 if ( -f $gs_config_file ) {
         open $fh_cf, '<', $gs_config_file or die "Can't open $gs_config_file";
+} else {
+	die("Cannot open config file $gs_config_file");
 }
 while (<$fh_cf>) {
 	chomp;
@@ -89,6 +92,11 @@ while (<$fh_cf>) {
 	}	
 }
 close($fh_cf);
+
+# Flush spamd table if we are root
+if ( $> eq 0 ) {
+	system("$pfctl -q -t spamd -T flush");
+}
 
 my $gi = Geo::IP->open("$geospamdb") 
 		or die("Cannot open GeoIP.dat file");
@@ -130,7 +138,6 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	}
 	# Run pfctl only if we are root
 	if ( $> eq 0 ) {
-		system($pfctl . " -t spamf -T flush");
 		while (<$fh_zs>) {
 			$ip = $_;
 			chomp;
@@ -139,7 +146,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			chop($ip);
 			$country = $gi->country_code_by_addr("$ip");
 			if ( defined ( $country ) && $country !~ /$white_country/ ) {
-				system($pfctl . " -t spamd -T add " . $ip);
+				system($pfctl . " -q -t spamd -T add " . $ip);
 			}		
 		}	
 	} else {

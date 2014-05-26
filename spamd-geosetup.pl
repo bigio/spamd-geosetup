@@ -19,8 +19,7 @@ my $pfctl = '/sbin/pfctl';
 my $spamdb = '/usr/sbin/spamdb';
 my $gzip = '/usr/bin/gzip';
 my $config_file = '/etc/mail/spamd.conf';
-# XXX should be configurable
-my $geospamdb = '/usr/local/share/examples/GeoIP/GeoIP.dat';
+my $geospamdb = '';
 
 my %opts;
 my $gs_config_file;
@@ -91,6 +90,10 @@ while (<$fh_cf>) {
 		$white_country = $_;
 		$white_country =~ s/whitelist=(.*)/$1/;
 	}	
+	if ( /(.*)geospamdb=/ ) {
+		$geospamdb = $_;
+		$geospamdb =~ s/geospamdb=(.*)/$1/;
+	}
 }
 close($fh_cf);
 

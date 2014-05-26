@@ -36,6 +36,7 @@ my $countf = 0;
 my $countp = 0;
 my $ztxt_spamfile;
 my $ip;
+my $all_ip;
 
 getopts('c:ho', \%opts);
 if ( defined $opts{'h'} ) {
@@ -136,24 +137,27 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			next;
 		}
 	}
-	# Run pfctl only if we are root
-	if ( $> eq 0 ) {
-		while (<$fh_zs>) {
-			$ip = $_;
-			chomp;
-			next if /^#/;
-			$ip =~ s/\/(.*)//;
-			chop($ip);
-			$country = $gi->country_code_by_addr("$ip");
-			if ( defined ( $country ) && $country !~ /$white_country/ ) {
-				system($pfctl . " -q -t spamd -T add " . $ip);
-			}		
-		}	
-	} else {
-		die("Cannot run pfctl, are you root?\n");
-	}
+	while (<$fh_zs>) {
+		$ip = $_;
+		chomp;
+		next if /^#/;
+		$ip =~ s/\/(.*)//;
+		chop($ip);
+		$country = $gi->country_code_by_addr("$ip");
+		if ( defined ( $country ) && $country !~ /$white_country/ ) {
+			$all_ip .= $ip . "\n";
+		}		
+	}	
 	close($fh_zs);
 	if ( !$offline ) {
 		unlink($spamfile);
 	}
+}
+# Run pfctl only if we are root
+if ( $> eq 0 ) {
+	open(SY, "| $pfctl -q -t spamd -T add -f - ");
+	print SY $all_ip;
+	close(SY);
+} else {
+	die("Cannot run pfctl, are you root?\n");
 }

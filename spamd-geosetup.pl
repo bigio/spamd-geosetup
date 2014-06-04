@@ -129,7 +129,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
         	if ($res->is_success) {
                 	$ztxt_spamfile = $res->content;
 			$spamfile = mktemp( "/tmp/spamXXXXXXX" );
-			open $fh_zs, '>', $spamfile or die("Cannot uncompress downloaded file $a_uri[$count]{'file'}\n");
+			open $fh_zs, '>', $spamfile or die("Cannot write downloaded file $a_uri[$count]{'file'}\n");
 			print $fh_zs $ztxt_spamfile;
 			close($fh_zs);
 			open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");

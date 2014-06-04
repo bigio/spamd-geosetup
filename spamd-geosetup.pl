@@ -24,6 +24,7 @@ my $geospamdb = '';
 my %opts;
 my $gs_config_file;
 my $offline = 0;
+my $quiet = 0;
 my $spamfile = '';
 my $fh_cf;
 my $fh_zs;
@@ -37,9 +38,9 @@ my $ztxt_spamfile;
 my $ip;
 my $all_ip;
 
-getopts('c:ho', \%opts);
+getopts('c:hoq', \%opts);
 if ( defined $opts{'h'} ) {
-        print "Usage: spamd-geosetup.pl [ -c config file] [-o]\n";
+        print "Usage: spamd-geosetup.pl [ -c config file] [-o] [-q]\n";
         exit;
 }
 if ( defined $opts{'c'} ) {
@@ -50,6 +51,10 @@ if ( defined $opts{'c'} ) {
 if ( defined $opts{'o'} ) {
 	# Offline mode
 	$offline = 1;
+}
+
+if ( defined $opts{'q'} ) {
+	$quiet = 1;
 }
 
 if ( -f $config_file ) {
@@ -106,7 +111,9 @@ my $gi = Geo::IP->open("$geospamdb")
 		or die("Cannot open GeoIP.dat file");
 my $country = '';
 for my $count ( 0 .. ( @a_uri - 1 ) ) {
-	print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
+	if ( !$quiet ) {
+		print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
+	}
 	if ( !$offline ) {
         	# Create a user agent object
         	my $ua = LWP::UserAgent->new;
@@ -136,7 +143,9 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
 		} else {
 			# Errors out and skip this file
-			print "File $spamfile non trovato\n";
+			if ( !$quiet ) {
+				print "File $spamfile non trovato\n";
+			}
 			next;
 		}
 	}

@@ -132,7 +132,11 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			open $fh_zs, '>', $spamfile or die("Cannot write downloaded file $a_uri[$count]{'file'}\n");
 			print $fh_zs $ztxt_spamfile;
 			close($fh_zs);
-			open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+			if ( -B $spamfile ) {
+				open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+			} else {
+				open $fh_zs, "$spamfile" or die("Cannot open $spamfile");
+			}
         	} else {
                 	die $res->status_line, "\n";
         	}
@@ -140,7 +144,11 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		my @a_spamfile = split('/', $a_uri[$count]{'file'});
 		$spamfile = $a_spamfile[@a_spamfile - 1];
 		if ( -f $spamfile ) {
-			open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+			if ( -B $spamfile ) {
+				open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+			} else {
+				open $fh_zs, "$spamfile" or die("Cannot open $spamfile");
+			}
 		} else {
 			# Errors out and skip this file
 			if ( !$quiet ) {

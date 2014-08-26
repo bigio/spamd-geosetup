@@ -77,6 +77,7 @@ while (<$fh_cf>) {
 	if ( /(.*)file=/ ) {
 		$file = $_;
 		$file =~ s/\t:file=(.*)/$1/;
+		$file =~ s/://;
 		$a_uri[$countf]{'file'} = $file;
 		$countf++;
 	}

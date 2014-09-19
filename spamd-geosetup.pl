@@ -37,7 +37,7 @@ my $countf = 0;
 my $countp = 0;
 my $ztxt_spamfile;
 my $ip;
-my $all_ip;
+my $all_ip = '';
 
 getopts('c:hoq', \%opts);
 if ( defined $opts{'h'} ) {
@@ -103,11 +103,6 @@ while (<$fh_cf>) {
 	}
 }
 close($fh_cf);
-
-# Flush spamd table if we are root
-if ( $> eq 0 ) {
-	system("$pfctl -q -t spamd -T flush");
-}
 
 my $gi = Geo::IP->open("$geospamdb") 
 		or die("Cannot open GeoIP.dat file");
@@ -177,9 +172,17 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 }
 # Run pfctl only if we are root
 if ( $> eq 0 ) {
-	open(SY, "| $pfctl -q -t spamd -T add -f - ");
-	print SY $all_ip;
-	close(SY);
+	if ( $all_ip != '' ) {
+		# Flush spamd table if we are root
+		system("$pfctl -q -t spamd -T flush");
+		open(SY, "| $pfctl -q -t spamd -T add -f - ");
+		print SY $all_ip;
+		close(SY);
+	} else {
+		if ( !$quiet ) {
+			print "empty ip list, cannot run pfctl\n";
+		}
+	}
 } else {
 	die("Cannot run pfctl, are you root?\n");
 }

@@ -149,7 +149,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		} else {
 			# Errors out and skip this file
 			if ( !$quiet ) {
-				print "File $spamfile non trovato\n";
+				print "File $spamfile not found\n";
 			}
 			next;
 		}

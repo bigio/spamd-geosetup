@@ -172,7 +172,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 }
 # Run pfctl only if we are root
 if ( $> eq 0 ) {
-	if ( $all_ip != '' ) {
+	if ( defined $all_ip ) {
 		# Flush spamd table if we are root
 		system("$pfctl -q -t spamd -T flush");
 		open(SY, "| $pfctl -q -t spamd -T add -f - ");

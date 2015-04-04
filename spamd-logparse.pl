@@ -10,6 +10,8 @@ use Geo::IP;
 use RRDs;
 
 my %opts;
+my $fh_log;
+my $log_file;
 
 getopts('hf:g:', \%opts);
 if ( defined $opts{'h'} ) {
@@ -19,4 +21,12 @@ if ( defined $opts{'h'} ) {
 if ( not defined $opts{'f'} ) {
 	print "log file parameter [-f] is missing\n";
 	exit;
+} else {
+	$log_file = $opts{'f'};
 }
+if ( -f $log_file ) {
+        open $fh_log, '<', $log_file;
+} else {
+	die "Can't open $log_file"
+}
+close($fh_log);

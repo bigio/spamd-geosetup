@@ -2,8 +2,8 @@
 
 # ex:ts=8 sw=4:
 
-TMPFILE=`mktemp` || exit 1
-TMPSORT=`mktemp` || exit 1
+TMPFILE=`mktemp -t spamd.log.XXXXXXXX` || exit 1
+TMPSORT=`mktemp -t spamd.log.XXXXXXXX` || exit 1
 
 $(cat $1 | awk '{print $6 "\n";}' | sed 's/\://g;s/logfile//g' > $TMPFILE)
 $(cat $TMPFILE | sort | uniq >$TMPSORT)

@@ -2,6 +2,11 @@
 
 # ex:ts=8 sw=4:
 
+if [ $# -ne 1 ]; then
+	echo "missing logfile parameter"
+	exit 1
+fi
+
 TMPFILE=`mktemp -t spamd.log.XXXXXXXX` || exit 1
 TMPSORT=`mktemp -t spamd.log.XXXXXXXX` || exit 1
 

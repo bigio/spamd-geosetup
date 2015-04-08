@@ -17,6 +17,8 @@ my @log_line;
 my $ip;
 my @ip_addr;
 my @uip_addr;
+my $geospamdb='/usr/local/share/examples/GeoIP/GeoIP.dat';
+my $country='';
 
 getopts('hf:g:', \%opts);
 if ( defined $opts{'h'} ) {
@@ -44,6 +46,18 @@ while (<$fh_log>) {
 	next if /^logfile/;
 	push ( @ip_addr, $ip );
 }
-@uip_addr = uniq @ip_addr;
-print Dumper \@uip_addr;
 close($fh_log);
+@uip_addr = uniq @ip_addr;
+
+my $gi = Geo::IP->open("$geospamdb")
+                or die("Cannot open GeoIP.dat file");
+for my $i ( 0 .. @uip_addr ) {
+	if ( defined(@uip_addr[$i]) ) {
+	$country = $gi->country_code_by_addr("@uip_addr[$i]");
+		print @uip_addr[$i];
+		print " -> ";
+		print $country;
+		print "\n";
+	}
+}
+# print Dumper \@uip_addr;

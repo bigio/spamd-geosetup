@@ -17,13 +17,16 @@ my @log_line;
 my $ip;
 my @ip_addr;
 my @uip_addr;
-my $geospamdb='/usr/local/share/examples/GeoIP/GeoIP.dat';
+my $geodb='/usr/local/share/examples/GeoIP/GeoIP.dat';
 my $country='';
 
-getopts('hf:g:', \%opts);
+getopts('d:hf:g:', \%opts);
 if ( defined $opts{'h'} ) {
         print "Usage: spamd-logparse.pl -f [-g]\n";
         exit;
+}
+if ( defined $opts{'d'} ) {
+	$geodb = $opts{'d'};
 }
 if ( not defined $opts{'f'} ) {
 	print "log file parameter [-f] is missing\n";
@@ -49,11 +52,11 @@ while (<$fh_log>) {
 close($fh_log);
 @uip_addr = uniq @ip_addr;
 
-my $gi = Geo::IP->open("$geospamdb")
+my $gi = Geo::IP->open("$geodb")
                 or die("Cannot open GeoIP.dat file");
 for my $i ( 0 .. @uip_addr ) {
 	if ( defined(@uip_addr[$i]) ) {
-	$country = $gi->country_code_by_addr("@uip_addr[$i]");
+		$country = $gi->country_code_by_addr("@uip_addr[$i]");
 		print @uip_addr[$i];
 		print " -> ";
 		print $country;

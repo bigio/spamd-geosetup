@@ -13,6 +13,7 @@ use lib ("$FindBin::Bin");
 use Getopt::Std;
 use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
+use File::LibMagic;
 use Geo::IP;
 
 my $pfctl = '/sbin/pfctl';
@@ -35,6 +36,7 @@ my $white_country = '';
 my @a_uri;
 my $countf = 0;
 my $countp = 0;
+my $zfinfo;
 my $ztxt_spamfile;
 my $ip;
 my $all_ip = '';
@@ -111,6 +113,8 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	if ( !$quiet ) {
 		print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
 	}
+	# Used to determine if the file is correctly downloaded
+	my $magic = File::LibMagic->new();
 	if ( !$offline ) {
         	# Create a user agent object
         	my $ua = LWP::UserAgent->new;
@@ -130,7 +134,13 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			print $fh_zs $ztxt_spamfile;
 			close($fh_zs);
 			if ( -B $spamfile ) {
-				open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+				$zfinfo = $magic->info_from_filename($spamfile);
+				if ( $zfinfo->{mime_type} eq "application/x-gzip" ) {
+					open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+				} else {
+					# File has not been correctly downloaded
+					exit 1;
+				}	
 			} else {
 				open $fh_zs, "$spamfile" or die("Cannot open $spamfile");
 			}
@@ -142,7 +152,13 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		$spamfile = $a_spamfile[@a_spamfile - 1];
 		if ( -f $spamfile ) {
 			if ( -B $spamfile ) {
-				open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+				$zfinfo = $magic->info_from_filename($spamfile);
+				if ( $zfinfo->{mime_type} eq "application/x-gzip" ) {
+					open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+				} else {
+					# File is malformed
+					exit 1;
+				}
 			} else {
 				open $fh_zs, "$spamfile" or die("Cannot open $spamfile");
 			}

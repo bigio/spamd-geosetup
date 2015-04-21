@@ -13,7 +13,7 @@ use lib ("$FindBin::Bin");
 use Getopt::Std;
 use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
-use File::LibMagic;
+use File::LibMagic 1.11;
 use Geo::IP;
 
 my $pfctl = '/sbin/pfctl';

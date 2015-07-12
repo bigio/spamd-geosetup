@@ -8,7 +8,6 @@ use Data::Dumper qw(Dumper);
 use Getopt::Std;
 use List::MoreUtils qw(uniq);
 use Geo::IP;
-use RRDs;
 
 my %opts;
 my $fh_log;

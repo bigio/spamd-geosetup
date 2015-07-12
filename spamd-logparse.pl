@@ -19,6 +19,9 @@ my @ip_addr;
 my @uip_addr;
 my $geodb='/usr/local/share/examples/GeoIP/GeoIP.dat';
 my $country='';
+my @geoip;
+my @geostats;
+my %stats;	# Count of ip per country
 
 getopts('d:hf:g:', \%opts);
 if ( defined $opts{'h'} ) {
@@ -57,10 +60,25 @@ my $gi = Geo::IP->open("$geodb")
 for my $i ( 0 .. @uip_addr ) {
 	if ( defined($uip_addr[$i]) ) {
 		$country = $gi->country_code_by_addr("$uip_addr[$i]");
-		print $uip_addr[$i];
-		print " -> ";
-		print $country;
-		print "\n";
+		# count countries
+		$geostats[$i] = $country;
+		# informations about ip addresses and countries
+		$geoip[$i]{GEO} = $country;
+		$geoip[$i]{IP} = $uip_addr[$i];
 	}
 }
-# print Dumper \@uip_addr;
+
+# Create an hash to have countries that send more spam
+my @sgeostats = sort @geostats;
+my $j = 1;
+my $soldgeostats = "";
+for my $i ( 0 .. @sgeostats ) {
+	if ( defined($sgeostats[$i]) && $sgeostats[$i] eq $soldgeostats ) {
+		$stats{$sgeostats[$i]} = $j++;
+	} else {
+		$j = 1;
+	}
+	$soldgeostats = $sgeostats[$i];
+}
+# Print countries with number of spammer ip addresses
+print Dumper \%stats;

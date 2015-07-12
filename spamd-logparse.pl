@@ -55,9 +55,9 @@ close($fh_log);
 my $gi = Geo::IP->open("$geodb")
                 or die("Cannot open GeoIP.dat file");
 for my $i ( 0 .. @uip_addr ) {
-	if ( defined(@uip_addr[$i]) ) {
-		$country = $gi->country_code_by_addr("@uip_addr[$i]");
-		print @uip_addr[$i];
+	if ( defined($uip_addr[$i]) ) {
+		$country = $gi->country_code_by_addr("$uip_addr[$i]");
+		print $uip_addr[$i];
 		print " -> ";
 		print $country;
 		print "\n";

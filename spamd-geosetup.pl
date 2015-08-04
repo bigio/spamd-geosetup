@@ -17,6 +17,7 @@ use File::LibMagic 1.11;
 use Geo::IP;
 
 my $pfctl = '/sbin/pfctl';
+my $ipset = '/usr/sbin/ipset';
 my $spamdb = '/usr/sbin/spamdb';
 my $gzip = '/usr/bin/gzip';
 my $config_file = '/etc/mail/spamd.conf';
@@ -186,19 +187,28 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		unlink($spamfile);
 	}
 }
-# Run pfctl only if we are root
+# Run pfctl/ipset only if we are root
 if ( $> eq 0 ) {
 	if ( defined $all_ip ) {
-		# Flush spamd table if we are root
-		system("$pfctl -q -t spamd -T flush");
-		open(SY, "| $pfctl -q -t spamd -T add -f - ");
-		print SY $all_ip;
-		close(SY);
+		if ( $^O =~ /linux/ ) {
+			# XXX ipset is limited to 65535 entries per set
+			my @ips = split("\n", $all_ip);
+			system("$ipset flush spamd");
+			foreach my $spam_ip (@ips) {
+				system("$ipset add spamd $spam_ip");
+			}
+		} else {
+			# Flush spamd table if we are root
+			system("$pfctl -q -t spamd -T flush");
+			open(SY, "| $pfctl -q -t spamd -T add -f - ");
+			print SY $all_ip;
+			close(SY);
+		}
 	} else {
 		if ( !$quiet ) {
-			print "empty ip list, cannot run pfctl\n";
+			print "empty ip list, cannot run firewall program\n";
 		}
 	}
 } else {
-	die("Cannot run pfctl, are you root?\n");
+	die("Cannot run firewall program, are you root?\n");
 }

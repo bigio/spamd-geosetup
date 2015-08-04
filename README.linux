@@ -1,0 +1,8 @@
+To make geospamd work on linux you should install ipset(8).
+You should create a set name spamd with the command:
+ipset create spamd hash:ip
+All ip addresses considered as spammers will be added to the set (maximum 65535 for the moment).
+You should then create an iptables rule to drop/tarpit the connections from those ip, for example you can use:
+iptables -A INPUT -p tcp --dport 25 -m set --set spamd src -j TARPIT
+or
+iptables -A INPUT -p tcp --dport 25 -m set --set spamd src -j DROP

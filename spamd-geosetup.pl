@@ -11,6 +11,7 @@ use FindBin;
 use lib ("$FindBin::Bin");
 
 use Getopt::Std;
+use List::MoreUtils qw(uniq);
 use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
 use File::LibMagic 1.11;
@@ -191,8 +192,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 if ( $> eq 0 ) {
 	if ( defined $all_ip ) {
 		if ( $^O =~ /linux/ ) {
-			# XXX ipset is limited to 65535 entries per set
-			my @ips = split("\n", $all_ip);
+			my @ips = uniq split("\n", $all_ip);
 			system("$ipset flush spamd");
 			foreach my $spam_ip (@ips) {
 				system("$ipset add spamd $spam_ip");

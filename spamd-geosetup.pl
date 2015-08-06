@@ -195,14 +195,18 @@ if ( $> eq 0 ) {
 			my @ips = uniq split("\n", $all_ip);
 			system("$ipset flush spamd");
 			foreach my $spam_ip (@ips) {
-				system("$ipset add spamd $spam_ip");
+				if ( $spam_ip !~ m/([a-zA-Z])/ ) {
+					system("$ipset add spamd $spam_ip");
+				}
 			}
 		} else {
 			# Flush spamd table if we are root
-			system("$pfctl -q -t spamd -T flush");
-			open(SY, "| $pfctl -q -t spamd -T add -f - ");
-			print SY $all_ip;
-			close(SY);
+			if ( $all_ip !~ m/([a-zA-Z])/ ) {
+				system("$pfctl -q -t spamd -T flush");
+				open(SY, "| $pfctl -q -t spamd -T add -f - ");
+				print SY $all_ip;
+				close(SY);
+			}
 		}
 	} else {
 		if ( !$quiet ) {

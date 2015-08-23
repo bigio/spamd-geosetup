@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # ex:ts=8 sw=4:
 
 use strict;
+use warnings;
 
 use Data::Dumper qw(Dumper);
 use Getopt::Std;

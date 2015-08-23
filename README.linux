@@ -6,3 +6,5 @@ You should then create an iptables rule to drop/tarpit the connections from thos
 iptables -A INPUT -p tcp --dport 25 -m set --set spamd src -j TARPIT
 or
 iptables -A INPUT -p tcp --dport 25 -m set --set spamd src -j DROP
+or you could use spamd.pl to slow spammers network resources
+iptables -A INPUT -p tcp --dport 25 -m set --set spamd src -j REDIRECT --to-ports 2525

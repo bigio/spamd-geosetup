@@ -44,7 +44,7 @@ sub process_request {
 		s/[\r\n]+$//;
 		slowprint "250 spamd Hello, pleased to meet you" if /HELO.*/i;
 		slowprint "250 2.0.0: Ok" if /(MAIL FROM:.*)|(RCPT TO:.*)/i;
-		last if /(QUIT)|(\.)/i;
+		last if /(QUIT)|(^\.$)/i;
 	}
 	slowprint "221 2.0.0: Bye";
 	$elapsed_time = time - $start_time;

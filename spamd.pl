@@ -11,17 +11,19 @@ sub slowprint {
 		sleep 1;
 		$i++;
 	}
+	print "\015\012";
 }
 
 sub process_request {
 	my $self = shift;
-	slowprint "220 spamd IP-based SPAM blocker\015\012";
+	slowprint "220 spamd IP-based SPAM blocker";
 	while (<STDIN>) {
 		s/[\r\n]+$//;
-		# slowprint "You said '$_'\015\012"; # basic echo
-		last if /quit/i;
+		slowprint "250 spamd Hello, pleased to meet you" if /HELO.*/i;
+		slowprint "250 2.0.0: Ok" if /(MAIL FROM:.*)|(RCPT TO:.*)/i;
+		last if /(QUIT)(\.)/i;
 	}
-	slowprint "221 2.0.0: Bye\015\012";
+	slowprint "221 2.0.0: Bye";
 }
 
 spamd->run(port => 2525, ipv => '*');

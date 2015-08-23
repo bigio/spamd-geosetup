@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # ex:ts=8 sw=4:
 
@@ -6,6 +6,7 @@
 $| = 1;
 
 use strict;
+use warnings;
 
 use FindBin;
 use lib ("$FindBin::Bin");

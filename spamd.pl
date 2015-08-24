@@ -65,6 +65,7 @@ sub process_request {
 	my $start_time = time;
 	my $elapsed_time;
 	# print Dumper $self;
+	do_log($self->{'server'}->{'peeraddr'}, undef);
 	slowprint "220 spamd IP-based SPAM blocker";
 	while (<STDIN>) {
 		s/[\r\n]+$//;
@@ -80,6 +81,9 @@ sub process_request {
 sub do_log {
 	my $ip_addr = shift;
 	my $elapsed_time = shift;
+	if ( not defined $elapsed_time ) {
+		$elapsed_time = 0;
+	}
 	my $id = 'spamd.pl'; my $fac = 'mail';
 	$fac =~ /^[A-Za-z0-9_]+\z/
 		or die "Suspicious syslog facility name: $fac";
@@ -87,7 +91,11 @@ sub do_log {
 	$syslog_facility_num =~ /^\d+\z/
 	or die "Unknown syslog facility name: $fac";
 	openlog($id, LOG_PID | LOG_NDELAY, $syslog_facility_num);
-	syslog LOG_INFO, "Spammer %s stuck for %d seconds", $ip_addr, $elapsed_time;
+	if ( $elapsed_time ne 0 ) {
+		syslog LOG_INFO, "Spammer %s stuck for %d seconds", $ip_addr, $elapsed_time;
+	} else {
+		syslog LOG_INFO, "Spammer %s connected", $ip_addr;
+	}
 	closelog();
 }
 

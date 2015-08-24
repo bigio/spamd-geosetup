@@ -84,12 +84,15 @@ sub do_log {
 	if ( not defined $elapsed_time ) {
 		$elapsed_time = 0;
 	}
-	my $id = 'spamd.pl'; my $fac = 'mail';
+	my $id = 'spamd.pl';
+	my $fac = 'mail';
+
 	$fac =~ /^[A-Za-z0-9_]+\z/
 		or die "Suspicious syslog facility name: $fac";
 	my $syslog_facility_num = eval("LOG_\U$fac");
 	$syslog_facility_num =~ /^\d+\z/
-	or die "Unknown syslog facility name: $fac";
+		or die "Unknown syslog facility name: $fac";
+
 	openlog($id, LOG_PID | LOG_NDELAY, $syslog_facility_num);
 	if ( $elapsed_time ne 0 ) {
 		syslog LOG_INFO, "Spammer %s stuck for %d seconds", $ip_addr, $elapsed_time;

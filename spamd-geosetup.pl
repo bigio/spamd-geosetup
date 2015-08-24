@@ -41,7 +41,7 @@ use Getopt::Std;
 use List::MoreUtils qw(uniq);
 use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
-use File::LibMagic 1.11;
+use File::LibMagic;
 use Geo::IP;
 
 my $pfctl = '/sbin/pfctl';
@@ -163,8 +163,8 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			print $fh_zs $ztxt_spamfile;
 			close($fh_zs);
 			if ( -B $spamfile ) {
-				$zfinfo = $magic->info_from_filename($spamfile);
-				if ( $zfinfo->{mime_type} eq "application/x-gzip" ) {
+				$zfinfo = $magic->checktype_filename($spamfile);
+				if ( $zfinfo =~ /application\/x-gzip;.*/ ) {
 					open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
 				} else {
 					# File has not been correctly downloaded
@@ -181,8 +181,8 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		$spamfile = $a_spamfile[@a_spamfile - 1];
 		if ( -f $spamfile ) {
 			if ( -B $spamfile ) {
-				$zfinfo = $magic->info_from_filename($spamfile);
-				if ( $zfinfo->{mime_type} eq "application/x-gzip" ) {
+				$zfinfo = $magic->checktype_filename($spamfile);
+				if ( $zfinfo =~ /application\/x-gzip;.*/ ) {
 					open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
 				} else {
 					# File is malformed

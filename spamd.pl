@@ -53,7 +53,7 @@ sub slowprint {
 	my $i = 0;
 	for ( $i .. length($text) ) {
 		print substr($text, $i, 1);
-		sleep 1;
+		sleep 2;
 		$i++;
 	}
 	print "\015\012";

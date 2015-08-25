@@ -103,14 +103,14 @@ sub do_log {
 }
 
 # option parsing
-getopts('bg:p:u:', \%opts);
+getopts('dg:p:u:', \%opts);
 if ( defined $opts{'b'} ) {
-	$background = 1;
+	$daemonize = 1;
 	if (defined $opts{'g'} and defined $opts{'u'} ) {
 		$user=$opts{'u'};
 		$group=$opts{'g'};
 	} else {
-		die("Background mode needs user [-u] and group [-g] parameters");
+		die("Daemon mode needs user [-u] and group [-g] parameters");
 	}
 }
 
@@ -120,7 +120,7 @@ if ( defined $opts{'p'} ) {
 }
 
 # Daemonize if requested
-if ($background eq 1) {
+if ($daemonize eq 1) {
 	daemonize(
 	$user,
 	$group,

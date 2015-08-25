@@ -40,7 +40,7 @@ use Net::Server::Daemonize qw(daemonize);
 use Unix::Syslog qw(:macros :subs);
 
 my %opts = ();
-my $background = 0;
+my $daemonize = 0;
 my $pid;
 my $port=2525;
 my $listenip='*';
@@ -104,7 +104,7 @@ sub do_log {
 
 # option parsing
 getopts('dg:p:u:', \%opts);
-if ( defined $opts{'b'} ) {
+if ( defined $opts{'d'} ) {
 	$daemonize = 1;
 	if (defined $opts{'g'} and defined $opts{'u'} ) {
 		$user=$opts{'u'};

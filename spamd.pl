@@ -35,7 +35,7 @@ use warnings;
 
 use Data::Dumper;
 use Getopt::Std;
-use base qw(Net::Server);
+use base qw(Net::Server::PreFork);
 use Net::Server::Daemonize qw(daemonize);
 use Unix::Syslog qw(:macros :subs);
 

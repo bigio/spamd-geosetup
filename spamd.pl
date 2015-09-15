@@ -65,22 +65,31 @@ sub process_request {
 	my $start_time = time;
 	my $elapsed_time;
 	# print Dumper $self;
+
+	local $SIG{'ALRM'} = sub { do_log_and_die($self->{'server'}->{'peeraddr'}, undef, "Timed out") };
+	my $timeout = 300;
+	my $previous_alarm = alarm($timeout);
+
 	do_log($self->{'server'}->{'peeraddr'}, undef);
 	slowprint "220 spamd IP-based SPAM blocker";
 	while (<STDIN>) {
 		s/[\r\n]+$//;
 		slowprint "250 spamd Hello, pleased to meet you" if /HELO.*/i;
 		slowprint "250 2.0.0: Ok" if /(MAIL FROM:.*)|(RCPT TO:.*)/i;
+		alarm($timeout);
 		last if /(QUIT)|(^\.$)/i;
 	}
 	slowprint "221 2.0.0: Bye";
 	$elapsed_time = time - $start_time;
 	do_log($self->{'server'}->{'peeraddr'}, $elapsed_time);
+	alarm($previous_alarm);
 }
 
 sub do_log {
 	my $ip_addr = shift;
 	my $elapsed_time = shift;
+	my $msg = shift;
+
 	if ( not defined $elapsed_time ) {
 		$elapsed_time = 0;
 	}
@@ -96,10 +105,20 @@ sub do_log {
 	openlog($id, LOG_PID | LOG_NDELAY, $syslog_facility_num);
 	if ( $elapsed_time ne 0 ) {
 		syslog LOG_INFO, "Spammer %s stuck for %d seconds", $ip_addr, $elapsed_time;
+	} elsif ( defined $msg ) {
+		syslog LOG_INFO, "Spammer %s %s", $ip_addr, $msg;
 	} else {
 		syslog LOG_INFO, "Spammer %s connected", $ip_addr;
 	}
 	closelog();
+}
+
+sub do_log_and_die {
+	my $ip = shift;
+	my $time = shift;
+	my $msg = shift;
+	do_log($ip, $time, $msg);
+	die;
 }
 
 # option parsing

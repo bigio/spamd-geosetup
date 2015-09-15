@@ -46,6 +46,7 @@ my $port=2525;
 my $listenip='*';
 my $user=undef;
 my $group=undef;
+my $timeout=300;
 
 # Print slowly
 sub slowprint {
@@ -67,7 +68,6 @@ sub process_request {
 	# print Dumper $self;
 
 	local $SIG{'ALRM'} = sub { do_log_and_die($self->{'server'}->{'peeraddr'}, undef, "Timed out") };
-	my $timeout = 300;
 	my $previous_alarm = alarm($timeout);
 
 	do_log($self->{'server'}->{'peeraddr'}, undef);
@@ -122,7 +122,7 @@ sub do_log_and_die {
 }
 
 # option parsing
-getopts('dg:p:u:', \%opts);
+getopts('dg:p:t:u:', \%opts);
 if ( defined $opts{'d'} ) {
 	$daemonize = 1;
 	if (defined $opts{'g'} and defined $opts{'u'} ) {
@@ -136,6 +136,11 @@ if ( defined $opts{'d'} ) {
 # Set a port different from default
 if ( defined $opts{'p'} ) {
 	$port = $opts{'p'};
+}
+
+# Set a timeout for alarm(3)
+if ( defined $opts{'t'} ) {
+	$timeout = $opts{'t'};
 }
 
 # Daemonize if requested

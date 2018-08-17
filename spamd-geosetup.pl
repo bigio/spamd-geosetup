@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #------------------------------------------------------------------------------
-# Copyright (c) 2014, Giovanni Bechis
+# Copyright (c) 2014-2018, Giovanni Bechis
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without

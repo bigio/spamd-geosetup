@@ -158,7 +158,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
         	# Check the outcome of the response
         	if ($res->is_success) {
                 	$ztxt_spamfile = $res->content;
-			$spamfile = mktemp( "/tmp/spamXXXXXXX" );
+			$spamfile = mktemp( "/tmp/geospam.XXXXXXX" );
 			open $fh_zs, '>', $spamfile or die("Cannot write downloaded file $a_uri[$count]{'file'}\n");
 			print $fh_zs $ztxt_spamfile;
 			close($fh_zs);

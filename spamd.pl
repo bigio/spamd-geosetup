@@ -98,7 +98,7 @@ sub do_log {
 
 	$fac =~ /^[A-Za-z0-9_]+\z/
 		or die "Suspicious syslog facility name: $fac";
-	my $syslog_facility_num = eval("LOG_\U$fac");
+	my $syslog_facility_num = eval("LOG_\U$fac"); ## no critic
 	$syslog_facility_num =~ /^\d+\z/
 		or die "Unknown syslog facility name: $fac";
 

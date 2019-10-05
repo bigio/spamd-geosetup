@@ -28,9 +28,6 @@
 
 # ex:ts=8 sw=4:
 
-# autoflush buffer
-$| = 1;
-
 use strict;
 use warnings;
 
@@ -43,6 +40,9 @@ use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
 use File::LibMagic;
 use Geo::IP;
+
+# autoflush buffer
+$| = 1;
 
 my $pfctl = '/sbin/pfctl';
 my $ipset = '/usr/sbin/ipset';
@@ -127,7 +127,7 @@ while (<$fh_cf>) {
 	if ( /(.*)whitelist=/ ) {
 		$white_country = $_;
 		$white_country =~ s/whitelist=(.*)/$1/;
-	}	
+	}
 	if ( /(.*)geospamdb=/ ) {
 		$geospamdb = $_;
 		$geospamdb =~ s/geospamdb=(.*)/$1/;
@@ -164,14 +164,15 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 			close($fh_zs);
 			if ( -B $spamfile ) {
 				$zfinfo = $magic->checktype_filename($spamfile);
-				if ( $zfinfo =~ /application\/x-gzip;.*/ ) {
-					open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+				if ( $zfinfo =~ /application\/(.*)gzip;.*/ ) {
+					open($fh_zs, "-|", "$gzip -dc $spamfile") or die("Cannot open $spamfile");
 				} else {
 					# File has not been correctly downloaded
+					warn "Bad file format: $zfinfo";
 					exit 1;
-				}	
+				}
 			} else {
-				open $fh_zs, "$spamfile" or die("Cannot open $spamfile");
+				open($fh_zs, "<", "$spamfile") or die("Cannot open $spamfile");
 			}
         	} else {
                 	die $res->status_line, "\n";
@@ -182,14 +183,15 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		if ( -f $spamfile ) {
 			if ( -B $spamfile ) {
 				$zfinfo = $magic->checktype_filename($spamfile);
-				if ( $zfinfo =~ /application\/x-gzip;.*/ ) {
-					open $fh_zs, "$gzip -dc $spamfile|" or die("Cannot open $spamfile");
+				if ( $zfinfo =~ /application\/(.*)gzip;.*/ ) {
+					open($fh_zs, "-|", "$gzip -dc $spamfile") or die("Cannot open $spamfile");
 				} else {
 					# File is malformed
+					warn "Bad file format: $zfinfo";
 					exit 1;
 				}
 			} else {
-				open $fh_zs, "$spamfile" or die("Cannot open $spamfile");
+				open($fh_zs, "<", "$spamfile") or die("Cannot open $spamfile");
 			}
 		} else {
 			# Errors out and skip this file
@@ -208,8 +210,8 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		$country = $gi->country_code_by_addr("$ip");
 		if ( defined ( $country ) && $country !~ /$white_country/ ) {
 			$all_ip .= $ip . "\n";
-		}		
-	}	
+		}
+	}
 	close($fh_zs);
 	if ( !$offline ) {
 		unlink($spamfile);
@@ -229,10 +231,11 @@ if ( $> eq 0 ) {
 		} else {
 			# Flush spamd table if we are root
 			if ( $all_ip !~ m/([a-zA-Z])/ ) {
+				my $fhpf;
 				system("$pfctl -q -t spamd -T flush");
-				open(SY, "| $pfctl -q -t spamd -T add -f - ");
-				print SY $all_ip;
-				close(SY);
+				open($fhpf, "|-", "$pfctl -q -t spamd -T add -f - ");
+				print $fhpf $all_ip;
+				close($fhpf);
 			}
 		}
 	} else {

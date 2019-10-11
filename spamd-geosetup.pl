@@ -40,10 +40,6 @@ use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
 use File::LibMagic;
 use IP::Country::DB_File;
-{
-no warnings;
-eval("use Locale::Country");
-}
 
 # autoflush buffer
 $| = 1;

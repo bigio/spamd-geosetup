@@ -54,7 +54,6 @@ my $gzip = '/usr/bin/gzip';
 my $config_file = '/etc/mail/spamd.conf';
 my $geospamdb = '';
 
-my $version = '0.2';
 my %opts;
 my $gs_config_file;
 my $offline = 0;
@@ -154,7 +153,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	if ( !$offline ) {
         	# Create a user agent object
         	my $ua = LWP::UserAgent->new;
-        	$ua->agent("spamd-geosetup/$version");
+		$ua->agent("spamd-geosetup");
 
         	# Create a request
         	my $req = HTTP::Request->new(GET => $a_uri[$count]{'proto'} . '://' . $a_uri[$count]{'file'});

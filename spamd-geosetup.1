@@ -1,0 +1,25 @@
+SPAMD-GEOSETUP(1)                                 User Contributed Perl Documentation                                 SPAMD-GEOSETUP(1)
+
+
+
+
+NNAAMMEE
+       spamd-geosetup - parse, geolocalize and load file of spammer addresses
+
+SSYYNNOOPPSSIISS
+       ssppaammdd--ggeeoosseettuupp -c config_file [-oq]
+
+DDEESSCCRRIIPPTTIIOONN
+       The spamd-geosetup utility sends blacklist data to ssppaammdd(8) or iippsseett(8), after excluding some ip addresses based on
+       geolocalization.
+
+OOPPTTIIOONNSS
+       -c  Path to the config file where nations to exclude and ipcc.db database path is stored.
+
+       -o  Offline mode, the program will not try to download a fresh copy of ip addresses from internet.
+
+       -q  Quiet mode, the program will try hard not to write anything on console.
+
+
+
+perl v5.28.2                                                   2019-10-11                                             SPAMD-GEOSETUP(1)

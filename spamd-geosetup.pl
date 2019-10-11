@@ -75,9 +75,44 @@ my $IPV6_ADDRESS = IPV6_ADDRESS;
 my $ipcc;
 my $cc;
 
+=head1 NAME
+
+spamd-geosetup - parse, geolocalize and load file of spammer addresses
+
+=head1 SYNOPSIS
+
+B<spamd-geosetup> -c config_file [-oq]
+
+=head1 DESCRIPTION
+
+The spamd-geosetup utility sends blacklist data to spamd(8) or ipset(8), after excluding some
+ip addresses based on geolocalization.
+
+=head1 OPTIONS
+
+=over 4
+
+=item -c
+
+Path to the config file where nations to exclude and ipcc.db database path
+is stored.
+
+=item -o
+
+Offline mode, the program will not try to download a fresh copy of ip addresses
+from internet.
+
+=item -q
+
+Quiet mode, the program will try hard not to write anything on console.
+
+=back
+
+=cut
+
 getopts('c:hoq', \%opts);
 if ( defined $opts{'h'} ) {
-        print "Usage: spamd-geosetup.pl [ -c config file] [-o] [-q]\n";
+        print "Usage: spamd-geosetup.pl [ -c config file] [-h] [-o] [-q]\n";
         exit;
 }
 if ( defined $opts{'c'} ) {

@@ -40,7 +40,10 @@ use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
 use File::LibMagic;
 use IP::Country::DB_File;
-use Locale::Country;
+{
+no warnings;
+eval("use Locale::Country");
+}
 
 # autoflush buffer
 $| = 1;
@@ -178,7 +181,6 @@ close($fh_cf);
 
 $ipcc = IP::Country::DB_File->new($geospamdb) or die("Cannot open database $geospamdb");
 
-my $country = '';
 for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	if ( !$quiet ) {
 		print $a_uri[$count]{'proto'} . "://" . $a_uri[$count]{'file'} . "\n";
@@ -258,8 +260,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		    $cc = $ipcc->inet6_atocc($ip);
 		  }
 		}
-		$country = code2country($cc);
-		if ( defined ( $country ) && $country !~ /$white_country/ ) {
+		if ( defined ( $cc ) && $cc !~ /$white_country/ ) {
 		  $all_ip .= $ip . "\n";
 		}
 	}

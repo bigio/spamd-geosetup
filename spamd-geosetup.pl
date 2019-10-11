@@ -203,7 +203,7 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		} else {
 			# Errors out and skip this file
 			if ( !$quiet ) {
-				print "File $spamfile not found\n";
+				warn "File $spamfile not found\n";
 			}
 			next;
 		}
@@ -257,9 +257,11 @@ if ( $> eq 0 ) {
 		}
 	} else {
 		if ( !$quiet ) {
-			print "empty ip list, cannot run firewall program\n";
+			warn "empty ip list, cannot run firewall program\n";
+			exit 1;
 		}
 	}
 } else {
-	die("Cannot run firewall program, are you root?\n");
+	warn "Cannot run firewall program, are you root?";
+	exit 1;
 }

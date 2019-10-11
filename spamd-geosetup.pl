@@ -39,10 +39,13 @@ use List::MoreUtils qw(uniq);
 use LWP::UserAgent;
 use File::Temp qw/ :mktemp /;
 use File::LibMagic;
-use Geo::IP;
+use IP::Country::DB_File;
+use Locale::Country;
 
 # autoflush buffer
 $| = 1;
+
+use constant IPV6_ADDRESS => qr/^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$/ox;
 
 my $pfctl = '/sbin/pfctl';
 my $ipset = '/usr/sbin/ipset';
@@ -69,6 +72,9 @@ my $zfinfo;
 my $ztxt_spamfile;
 my $ip;
 my $all_ip = '';
+my $IPV6_ADDRESS = IPV6_ADDRESS;
+my $ipcc;
+my $cc;
 
 getopts('c:hoq', \%opts);
 if ( defined $opts{'h'} ) {
@@ -80,6 +86,7 @@ if ( defined $opts{'c'} ) {
 } else {
 	$gs_config_file = '/etc/mail/geospamd.conf';
 }
+
 if ( defined $opts{'o'} ) {
 	# Offline mode
 	$offline = 1;
@@ -135,8 +142,8 @@ while (<$fh_cf>) {
 }
 close($fh_cf);
 
-my $gi = Geo::IP->open("$geospamdb") 
-		or die("Cannot open GeoIP.dat file");
+$ipcc = IP::Country::DB_File->new($geospamdb) or die("Cannot open database $geospamdb");
+
 my $country = '';
 for my $count ( 0 .. ( @a_uri - 1 ) ) {
 	if ( !$quiet ) {
@@ -207,9 +214,19 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		next if /^#/;
 		$ip =~ s/\/(.*)//;
 		chop($ip);
-		$country = $gi->country_code_by_addr("$ip");
+
+		if ( $ip =~ /^$IPV6_ADDRESS$/ ) {
+		  $cc = $ipcc->inet6_atocc($ip);
+		} else {
+		  $cc = $ipcc->inet_atocc($ip);
+		  # If ipv4 fails retry with ipv6, it could be an ipv6-only host
+		  if ( ! defined $cc ) {
+		    $cc = $ipcc->inet6_atocc($ip);
+		  }
+		}
+		$country = code2country($cc);
 		if ( defined ( $country ) && $country !~ /$white_country/ ) {
-			$all_ip .= $ip . "\n";
+		  $all_ip .= $ip . "\n";
 		}
 	}
 	close($fh_zs);

@@ -44,7 +44,18 @@ use IP::Country::DB_File;
 # autoflush buffer
 $| = 1;
 
+use constant IPV4_ADDRESS => qr/\b
+                    (?:1\d\d|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.
+                    (?:1\d\d|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.
+                    (?:1\d\d|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.
+                    (?:1\d\d|2[0-4]\d|25[0-5]|[1-9]\d|\d)
+                  \b/x;
+
 use constant IPV6_ADDRESS => qr/^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$/ox;
+
+# exact match
+use constant IS_IPV4_ADDRESS => qr/^${\(IPV4_ADDRESS)}$/;
+use constant IS_IPV6_ADDRESS => qr/^${\(IPV6_ADDRESS)}$/;
 
 my $pfctl = '/sbin/pfctl';
 my $ipset = '/usr/sbin/ipset';
@@ -70,7 +81,6 @@ my $zfinfo;
 my $ztxt_spamfile;
 my $ip;
 my $all_ip = '';
-my $IPV6_ADDRESS = IPV6_ADDRESS;
 my $ipcc;
 my $cc;
 
@@ -247,9 +257,10 @@ for my $count ( 0 .. ( @a_uri - 1 ) ) {
 		$ip =~ s/\/(.*)//;
 		chop($ip);
 
-		if ( $ip =~ /^$IPV6_ADDRESS$/ ) {
+		# XXX Only ip addresses are listed, do not consider hostnames
+		if ( $ip =~ IS_IPV6_ADDRESS ) {
 		  $cc = $ipcc->inet6_atocc($ip);
-		} else {
+		} elsif ( $ip =~ IS_IPV4_ADDRESS ) {
 		  $cc = $ipcc->inet_atocc($ip);
 		  # If ipv4 fails retry with ipv6, it could be an ipv6-only host
 		  if ( ! defined $cc ) {
